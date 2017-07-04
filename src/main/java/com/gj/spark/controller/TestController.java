@@ -11,7 +11,9 @@ public class TestController {
 	
 	@ResponseBody
 	@MapURL(value = "/test",RequestMethod = RequestMethod.GET)
-	public Message  getTest(){
+	public Message  getTest(String s1,String s2){
+		System.out.println("=============s1:"+s1);
+		System.out.println("=============s2:"+s2);
 		return new Message("hello world!!");
 	}
 

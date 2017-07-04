@@ -3,9 +3,6 @@ package com.gj.spark.structure;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by lenovo on 2016/5/22.
- */
 public class ModelMap {
     public Map<String,Object> map;
 

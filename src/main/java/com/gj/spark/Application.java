@@ -2,8 +2,10 @@ package com.gj.spark;
 
 import static spark.Spark.get;
 import static spark.Spark.port;
+import static spark.Spark.post;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +36,7 @@ public class Application {
 		Map<String, MethodPro> methodMap = ClassCollection.getMethodMap();
 		Map<String, Class<?>> classMap = ClassCollection.getClassMap();
 		Set<Class<?>> classSet = ClassCollection.getClassSet();
+		Map<String, ArrayList<String>> methodNamesMap = ClassCollection.getMethodNamesMap();
 		Map<Class<?>,Object> instanceMap = new HashMap<Class<?>,Object>();
 
 		for (Map.Entry<String, MethodPro> entry : methodMap.entrySet()) {
@@ -47,9 +50,34 @@ public class Application {
 				get(entry.getKey(),new Route(){
 					@Override
 					public Object handle(Request request, Response response) throws Exception {
+						
 						Method method = methodPro.getMethod();
 						Class<?> class1 = classMap.get(entry.getKey());
-						boolean contains = classSet.contains(class1);
+						if(!instanceMap.containsKey(class1)){
+							instanceMap.put(class1, class1.newInstance());
+						}
+						ArrayList<String> argList = methodNamesMap.get(entry.getKey());
+						Object[] args = new Object[argList.size()];
+						if(argList != null){
+							for(int i=0;i < argList.size(); i++){
+								String temp = argList.get(i);
+								String params = request.queryParamOrDefault(temp,null);
+								args[i] =params;
+							}
+						}
+					
+						
+						Object invoke = method.invoke(instanceMap.get(class1), args);
+						return JSON.toJSONString(invoke);
+					}
+				});
+			
+			} else if ("POST".equals(urlStyle)) {
+				post(entry.getKey(),new Route(){
+					@Override
+					public Object handle(Request request, Response response) throws Exception {
+						Method method = methodPro.getMethod();
+						Class<?> class1 = classMap.get(entry.getKey());
 						if(!instanceMap.containsKey(class1)){
 							instanceMap.put(class1, class1.newInstance());
 						}
@@ -57,8 +85,6 @@ public class Application {
 						return JSON.toJSONString(invoke);
 					}
 				});
-			
-			} else if ("POST".equals(urlStyle)) {
 
 			}
 
