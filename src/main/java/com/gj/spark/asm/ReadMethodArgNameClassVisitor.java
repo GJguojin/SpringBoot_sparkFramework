@@ -31,21 +31,37 @@ public class ReadMethodArgNameClassVisitor extends ClassVisitor {
 			Type methodType = Type.getMethodType(desc);
 			Type[] argumentTypes = methodType.getArgumentTypes();
 			Class<?>[] parameterTypes = method.getParameterTypes();
-			if(argumentTypes.length == parameterTypes.length){
-				int len = argumentTypes.length;
-				boolean isEquals = true;
-				for(int i=0;i<len;i++){
-					if(!argumentTypes[i].getClassName().equals(parameterTypes[i].getName())){
-						isEquals = false;
-						break;
-					}
-				}
-				if(isEquals){
-					visitor.argumentNames = argNames;
-					visitor.argLen = len;
-				}
+			
+			if(sameType(argumentTypes,parameterTypes)){
+				visitor.argumentNames = argNames;
+				visitor.argLen = argumentTypes.length;
 			}
 		}
 		return visitor;
+	}
+	
+	/**
+	 *
+	 * <p>
+	 * 比较参数类型是否一致
+	 * </p>
+	 *
+	 * @param types
+	 *            asm的类型({@link Type})
+	 * @param clazzes
+	 *            java 类型({@link Class})
+	 * @return
+	 */
+	private static boolean sameType(Type[] types, Class<?>[] clazzes) {
+		// 个数不同
+		if (types.length != clazzes.length) {
+			return false;
+		}
+		for (int i = 0; i < types.length; i++) {
+			if (!Type.getType(clazzes[i]).equals(types[i])) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

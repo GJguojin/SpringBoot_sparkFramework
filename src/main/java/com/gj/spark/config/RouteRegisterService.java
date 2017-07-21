@@ -16,9 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,10 +30,10 @@ import com.gj.spark.annotation.RequestMapping;
 import com.gj.spark.annotation.RequestMethod;
 import com.gj.spark.asm.ReadMethodArgNameClassVisitor;
 import com.gj.spark.controller.TestController;
+import com.gj.spark.structure.SparkMethod;
 import com.gj.spark.utils.SparkJsonTransformer;
 
 import spark.Route;
-import spark.utils.StringUtils;
 
 @Component
 public class RouteRegisterService implements ApplicationContextAware {
@@ -49,93 +46,39 @@ public class RouteRegisterService implements ApplicationContextAware {
 	private ApplicationContext applicationContext;
 
 	private final static Logger logger = LoggerFactory.getLogger(RouteRegisterService.class);
-
+	
 	public void init() throws Exception {
 		final Map<String, Object> controllerMap = applicationContext.getBeansWithAnnotation(Controller.class);
 		for (final Object controllerObject : controllerMap.values()) {
-			// 类上面的路由
-			String[] classPaths = new String[]{"/"};
-			
 			Class<? extends Object> controllerClass = controllerObject.getClass();
-			String className = controllerClass.getName();
-			RequestMapping classRequestMapping = controllerClass.getAnnotation(RequestMapping.class);
-			if(classRequestMapping != null){
-				classPaths = classRequestMapping.path();
-			}
-			for (String classPath : classPaths) {
-				if (!StringUtils.isBlank(classPath) && !classPath.startsWith("/")) {
-					classPath = "/" + classPath;
-				}
-				
-				ClassReader cr = new ClassReader(className);
-				Method[] methods = controllerObject.getClass().getDeclaredMethods();
-				for (Method method : methods) {
-					ReadMethodArgNameClassVisitor classVisitor = new ReadMethodArgNameClassVisitor(method);
-					cr.accept(classVisitor, 0);
-					
-					//方法参数名称
-					List<String> argNames = classVisitor.argNames; 
-					
-					RequestMapping methodRequestMapping = method.getAnnotation(RequestMapping.class);
-					if (methodRequestMapping != null) {
-						String[] methodPaths = methodRequestMapping.path();
-						if(methodPaths.length == 0){
-							methodPaths = methodRequestMapping.value();
-						}
-						if(methodPaths.length == 0){
-							methodPaths = new String[]{"/"};
-						}
-						for (String methodPath : methodPaths) {
-							if (!StringUtils.isBlank(methodPath) && !methodPath.startsWith("/")) {
-								methodPath = "/" + methodPath;
+			ClassReader cr = new ClassReader(controllerClass.getName());
+			Method[] methods = controllerClass.getDeclaredMethods();
+			for (Method method : methods) {
+				RequestMapping methodRequestMapping = method.getAnnotation(RequestMapping.class);
+				if (methodRequestMapping != null) {
+					SparkMethod methodHandle = new SparkMethod(method,controllerClass,cr,applicationContext);
+					List<String> fullPaths = methodHandle.getFullPaths();
+					for(String fullPath:fullPaths){
+						Route router = (request, response) -> {
+							Object[] args = methodHandle.getMethodArgs(request,response);
+							response.type("application/json");
+							return method.invoke(controllerObject, args);
+						};
+						
+						RequestMethod[] requestMethods = methodHandle.getRequestMethods();
+						for (RequestMethod requestMethod : requestMethods) {
+							String temp = requestMethod.name()+"_"+fullPath;
+							if(FULLPATH.contains(temp)){
+								throw new Exception("path "+temp+" has exists!");
+							}else{
+								FULLPATH.add(temp);
 							}
-							// 完整路由
-							String fullPath = (classPath.equals("/")?"":classPath) + methodPath;
-							RequestMethod[] requestMethods = methodRequestMapping.method();
-							// 绑定路由与方法的关联
-							if (requestMethods == null || requestMethods.length == 0) {
-								requestMethods = RequestMethod.values();
-							}
-							Route router = (req, res) -> {
-								String[] partPaths = fullPath.split("/");
-								HttpServletRequest request = req.raw();
-								HttpServletResponse response = res.raw();
-								
-								Object[] args = new Object[argNames.size()];
-								Class<?>[] parameterTypes = method.getParameterTypes();
-								for(int i=0;i < argNames.size(); i++){
-									String temp = argNames.get(i);
-									Class<?> typeParameter = parameterTypes[i];
-									String params = req.queryParamOrDefault(temp,null);
-									if(typeParameter.equals(HttpServletRequest.class)){
-										args[i] =req.raw();
-									}else if(typeParameter.equals(HttpServletResponse.class)){
-										args[i] = res.raw();
-									}else if(typeParameter.equals(Integer.class)){
-										args[i] =new Integer(params);
-									}else{
-										args[i] =params;
-									}
-									
-								}
-								res.type("application/json");
-								return method.invoke(controllerObject, args);
-							};
-							for (RequestMethod requestMethod : requestMethods) {
-								String temp = requestMethod.name()+"_"+fullPath;
-								if(FULLPATH.contains(temp)){
-									throw new Exception("path "+temp+" has exists!");
-								}else{
-									FULLPATH.add(temp);
-								}
-								logger.debug("register router: {} {} -> {} ", requestMethod.name(), fullPath, controllerObject.getClass().getName() + "." + method.getName());
-								bindRouteMethod(requestMethod, router, fullPath);
-							}
+							logger.debug("===========spark register router: {} {} -> {} ", requestMethod.name(), fullPath, controllerObject.getClass().getName() + "." + method.getName());
+							bindRouteMethod(requestMethod, router, fullPath);
 						}
 					}
 				}
 			}
-
 		}
 	}
 

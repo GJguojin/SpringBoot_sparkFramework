@@ -13,7 +13,7 @@ import com.gj.spark.annotation.RequestMethod;
 public class TestController {
 	
 	@RequestMapping(path = "/test",method = RequestMethod.GET)
-	public Message  getTest(Integer s1,String s2,HttpServletRequest request){
+	public Message  getTest(Integer s1,Integer s2,HttpServletRequest request){
 		Enumeration<String> attributeNames = request.getAttributeNames();
 		System.out.println("=============s1:"+s1);
 		System.out.println("=============s2:"+s2);

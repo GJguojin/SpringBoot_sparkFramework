@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.deser.std.DateDeserializers.DateDeserializ
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.DateSerializer;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.gj.spark.structure.RequestMappingHandlerAdapter;
 import com.gj.spark.utils.SparkJsonTransformer;
 
 @SpringBootApplication
@@ -26,66 +27,6 @@ public class Application {
 		ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
 		context.registerShutdownHook();
 		context.start();
-
-/*		port(8080); // <- Uncomment this if you want spark to listen to port 5678 instead of the default 4567
-
-		ClassCollection.scanClassSetByPackage("com.gj.spark.controller");
-		Map<String, MethodPro> methodMap = ClassCollection.getMethodMap();
-		Map<String, Class<?>> classMap = ClassCollection.getClassMap();
-		Set<Class<?>> classSet = ClassCollection.getClassSet();
-		Map<String, ArrayList<String>> methodNamesMap = ClassCollection.getMethodNamesMap();
-		Map<Class<?>,Object> instanceMap = new HashMap<Class<?>,Object>();
-
-		for (Map.Entry<String, MethodPro> entry : methodMap.entrySet()) {
-			// Map.entry<Integer,String> 映射项（键-值对） 有几个方法：用上面的名字entry
-			// entry.getKey() ;entry.getValue(); entry.setValue();
-			// map.entrySet() 返回此映射中包含的映射关系的 Set视图。
-			System.out.println("key= " + entry.getKey() + " and value= " + entry.getValue());
-			MethodPro methodPro = entry.getValue();
-			String urlStyle = methodPro.getUrlStyle();
-			if ("GET".equals(urlStyle)) {
-				get(entry.getKey(),new Route(){
-					@Override
-					public Object handle(Request request, Response response) throws Exception {
-						
-						Method method = methodPro.getMethod();
-						Class<?> class1 = classMap.get(entry.getKey());
-						if(!instanceMap.containsKey(class1)){
-							instanceMap.put(class1, class1.newInstance());
-						}
-						ArrayList<String> argList = methodNamesMap.get(entry.getKey());
-						Object[] args = new Object[argList.size()];
-						if(argList != null){
-							for(int i=0;i < argList.size(); i++){
-								String temp = argList.get(i);
-								String params = request.queryParamOrDefault(temp,null);
-								args[i] =params;
-							}
-						}
-					
-						
-						Object invoke = method.invoke(instanceMap.get(class1), args);
-						return null;
-					}
-				});
-			
-			} else if ("POST".equals(urlStyle)) {
-				post(entry.getKey(),new Route(){
-					@Override
-					public Object handle(Request request, Response response) throws Exception {
-						Method method = methodPro.getMethod();
-						Class<?> class1 = classMap.get(entry.getKey());
-						if(!instanceMap.containsKey(class1)){
-							instanceMap.put(class1, class1.newInstance());
-						}
-						Object invoke = method.invoke(instanceMap.get(class1), null);
-						return null;
-					}
-				});
-
-			}
-
-		}*/
 	}
 	
     @Bean
@@ -111,6 +52,12 @@ public class Application {
     @Bean
     public SparkJsonTransformer getJsonTransformer(){
     	return new SparkJsonTransformer(jacksonObjectMapper());
+    }
+    
+    @Bean
+    public RequestMappingHandlerAdapter getRequestMappingHandlerAdapter(){
+    	RequestMappingHandlerAdapter requestMappingHandlerAdapter = new RequestMappingHandlerAdapter();
+    	return requestMappingHandlerAdapter;
     }
 
 }
