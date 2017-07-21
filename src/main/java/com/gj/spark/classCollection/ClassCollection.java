@@ -1,28 +1,11 @@
 package com.gj.spark.classCollection;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import org.objectweb.asm.ClassReader;
-
-import com.gj.spark.annotation.Controller;
-import com.gj.spark.annotation.MapURL;
-import com.gj.spark.annotation.ResponseBody;
-import com.gj.spark.asm.ReadMethodArgNameClassVisitor;
 import com.gj.spark.structure.MethodPro;
-import com.gj.spark.utils.Config;
-import com.gj.spark.utils.FileUtils;
-import com.gj.spark.utils.StringUtils;
 
 
 public class ClassCollection {
@@ -32,7 +15,7 @@ public class ClassCollection {
 	public static Map<String,ArrayList<String>> methodNamesMap ;
 
 	public static void scanClassSetByPackage(String packageName) {
-		methodMap = new HashMap<String, MethodPro>();
+/*		methodMap = new HashMap<String, MethodPro>();
 		classMap = new HashMap<String, Class<?>>();
 		classSet = new HashSet<Class<?>>();
 		methodNamesMap = new HashMap<String,ArrayList<String>>();
@@ -71,23 +54,23 @@ public class ClassCollection {
 					}
 				}
 			}
-		}
+		}*/
 	}
 	
 	public static ArrayList<String> getMethodNames(String className, String methodName) throws IOException {
 		ArrayList<String> list = new ArrayList<String>();
-		String cn = Config.getProPath() + className.replace(".", "/") + ".class";
-		InputStream is = new FileInputStream(new File(cn));
-		ClassReader cr = new ClassReader(is);
-		ReadMethodArgNameClassVisitor classVisitor = new ReadMethodArgNameClassVisitor();
-		cr.accept(classVisitor, 0);
-		for (Entry<String, List<String>> entry : classVisitor.nameArgMap.entrySet()) {
-			if (entry.getKey().equals(methodName)) {
-				for (String s : entry.getValue()) {
-					list.add(s);
-				}
-			}
-		}
+//		String cn = Config.getProPath() + className.replace(".", "/") + ".class";
+//		InputStream is = new FileInputStream(new File(cn));
+//		ClassReader cr = new ClassReader(is);
+//		ReadMethodArgNameClassVisitor classVisitor = new ReadMethodArgNameClassVisitor();
+//		cr.accept(classVisitor, 0);
+//		for (Entry<String, List<String>> entry : classVisitor.nameArgMap.entrySet()) {
+//			if (entry.getKey().equals(methodName)) {
+//				for (String s : entry.getValue()) {
+//					list.add(s);
+//				}
+//			}
+//		}
 		return list;
 	}
 

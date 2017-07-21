@@ -1,26 +1,23 @@
 package com.gj.spark;
 
-import static spark.Spark.get;
-import static spark.Spark.port;
-import static spark.Spark.post;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
-import com.alibaba.fastjson.JSON;
-import com.gj.spark.classCollection.ClassCollection;
-import com.gj.spark.structure.MethodPro;
-
-import spark.Request;
-import spark.Response;
-import spark.Route;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.deser.std.DateDeserializers.DateDeserializer;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.DateSerializer;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.gj.spark.utils.SparkJsonTransformer;
 
 @SpringBootApplication
 public class Application {
@@ -30,7 +27,7 @@ public class Application {
 		context.registerShutdownHook();
 		context.start();
 
-		port(8080); // <- Uncomment this if you want spark to listen to port 5678 instead of the default 4567
+/*		port(8080); // <- Uncomment this if you want spark to listen to port 5678 instead of the default 4567
 
 		ClassCollection.scanClassSetByPackage("com.gj.spark.controller");
 		Map<String, MethodPro> methodMap = ClassCollection.getMethodMap();
@@ -68,7 +65,7 @@ public class Application {
 					
 						
 						Object invoke = method.invoke(instanceMap.get(class1), args);
-						return JSON.toJSONString(invoke);
+						return null;
 					}
 				});
 			
@@ -82,44 +79,38 @@ public class Application {
 							instanceMap.put(class1, class1.newInstance());
 						}
 						Object invoke = method.invoke(instanceMap.get(class1), null);
-						return JSON.toJSONString(invoke);
+						return null;
 					}
 				});
 
 			}
 
-		}
-		/*
-		get("/rest/test1", (request, response) -> {
-			System.out.println("调用 test...");
-			Thread.sleep(100); //
-			return new Message("hello world!!");
-		});
-		 * get("/hello", (request, response) -> {
-		 * return "Hello World!";
-		 * });
-		 * post("/hello", (request, response) ->
-		 * "Hello World: " + request.body()
-		 * );
-		 * get("/private", (request, response) -> {
-		 * response.status(401);
-		 * return "Go Away!!!";
-		 * });
-		 * get("/users/:name", (request, response) -> "Selected user: " + request.params(":name"));
-		 * get("/news/:section", (request, response) -> {
-		 * response.type("text/xml");
-		 * return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><news>" + request.params("section") + "</news>";
-		 * });
-		 * get("/protected", (request, response) -> {
-		 * halt(403, "I don't think so!!!");
-		 * return null;
-		 * });
-		 * get("/redirect", (request, response) -> {
-		 * response.redirect("/news/world");
-		 * return null;
-		 * });
-		 * get("/", (request, response) -> "root");
-		 */
+		}*/
 	}
+	
+    @Bean
+	@Primary
+	public ObjectMapper jacksonObjectMapper() {
+		ObjectMapper mapper = new ObjectMapper();
+		
+		//忽略值为null的属性
+		mapper.setSerializationInclusion(Include.NON_NULL);
+		
+		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+	    mapper.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+	    mapper.enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
+		
+		SimpleModule module = new SimpleModule();
+		module.addSerializer(Long.class, new ToStringSerializer());  
+		module.addSerializer(Date.class, new DateSerializer(false, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")));
+		module.addDeserializer(Date.class, new DateDeserializer(new DateDeserializer(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"), "yyyy-MM-dd HH:mm:ss" ));
+		mapper.registerModule(module);
+		return mapper;
+	}
+    
+    @Bean
+    public SparkJsonTransformer getJsonTransformer(){
+    	return new SparkJsonTransformer(jacksonObjectMapper());
+    }
 
 }
