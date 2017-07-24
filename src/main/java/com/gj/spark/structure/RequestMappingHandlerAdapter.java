@@ -71,15 +71,9 @@ public class RequestMappingHandlerAdapter implements BeanFactoryAware, Initializ
 	}
 	
 	public Object getMethodArgumentResolverResult(SparkMethodParameter parameter,Request request,Response response) throws Exception{
-		List<HandlerMethodArgumentResolver> resolvers = argumentResolvers.getResolvers();
 		Object returnObject = null;
-		for(HandlerMethodArgumentResolver resolver :resolvers){
-			if(resolver.supportsParameter(parameter)){
-				returnObject = resolver.resolveArgument(parameter, request, response);
-				if(returnObject != null){
-					break;
-				}
-			}
+		if(argumentResolvers.supportsParameter(parameter)){
+			returnObject = argumentResolvers.resolveArgument(parameter, request, response);
 		}
 		return returnObject;
 	}

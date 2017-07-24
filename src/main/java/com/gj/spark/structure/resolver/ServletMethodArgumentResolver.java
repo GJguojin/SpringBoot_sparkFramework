@@ -14,7 +14,9 @@ public class ServletMethodArgumentResolver implements HandlerMethodArgumentResol
 	@Override
 	public boolean supportsParameter(SparkMethodParameter sparkMethodParameter) {
 		Class<?> typeParameter = sparkMethodParameter.getParameter().getType();
-		if (HttpServletRequest.class.isAssignableFrom(typeParameter) || HttpServletResponse.class.isAssignableFrom(typeParameter)) {
+		if (HttpServletRequest.class.isAssignableFrom(typeParameter) || HttpServletResponse.class.isAssignableFrom(typeParameter) ||
+				Request.class.isAssignableFrom(typeParameter) || Response.class.isAssignableFrom(typeParameter)
+			) {
 			return true;
 		}
 		return false;
@@ -28,6 +30,10 @@ public class ServletMethodArgumentResolver implements HandlerMethodArgumentResol
 			returnObj =request.raw();
 		}else if(HttpServletResponse.class.isAssignableFrom(typeParameter)){
 			returnObj = response.raw();
+		}else if(Request.class.isAssignableFrom(typeParameter)){
+			returnObj = request;
+		}else if(Response.class.isAssignableFrom(typeParameter)){
+			returnObj = response;
 		}
 		return returnObj;
 	}
